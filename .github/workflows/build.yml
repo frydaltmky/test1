@@ -41,11 +41,16 @@ jobs:
       - name: Verify SDK installation
         run: sdkmanager --list | head -n 30
 
+      - name: Initialize Gradle project settings
+        run: |
+          echo "include ':'" > settings.gradle
+          echo "rootProject.name = 'test1'" >> settings.gradle
+
       - name: Build APK
-        run: ./gradlew assembleDebug || gradle assembleDebug
+        run: gradle assembleDebug --stacktrace
 
       - name: Show built APKs
-        run: find app/build/outputs/apk -name "*.apk"
+        run: find build/outputs/apk -name "*.apk" || find . -name "*.apk"
 
       - name: Create Git tag ${{ inputs.release_tag }}
         run: |
@@ -60,4 +65,6 @@ jobs:
           tag_name: ${{ inputs.release_tag }}
           name: Release ${{ inputs.release_tag }}
           generate_release_notes: true
-          files: app/build/outputs/apk/**/*.apk
+          files: |
+            build/outputs/apk/**/*.apk
+            **/*.apk
