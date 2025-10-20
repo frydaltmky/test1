@@ -1,70 +1,27 @@
-name: Build and Release Android APK
+name: Android Build
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: 'Release Tag (e.g. v1.0.0)'
-        required: true
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-release:
+  build:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 17
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: latest
+    - name: Download Gradle
+      uses: gradle/gradle-build-action@v3
 
-      - name: Install Android Build Tools & Platforms
-        run: |
-          sdkmanager "platforms;android-30" "build-tools;30.0.3" "platform-tools" "ndk;21.4.7075529"
-
-      - name: Verify SDK installation
-        run: sdkmanager --list | head -n 30
-
-      - name: Initialize Gradle project settings
-        run: |
-          echo "include ':'" > settings.gradle
-          echo "rootProject.name = 'test1'" >> settings.gradle
-
-      - name: Build APK
-        run: gradle assembleDebug --stacktrace
-
-      - name: Show built APKs
-        run: find build/outputs/apk -name "*.apk" || find . -name "*.apk"
-
-      - name: Create Git tag ${{ inputs.release_tag }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ inputs.release_tag }}
-          git push origin ${{ inputs.release_tag }}
-
-      - name: Upload APKs to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ inputs.release_tag }}
-          name: Release ${{ inputs.release_tag }}
-          generate_release_notes: true
-          files: |
-            build/outputs/apk/**/*.apk
-            **/*.apk
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --stacktrace
