@@ -32,11 +32,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Build APK (with NDK)
-        run: ./gradlew assembleDebug
+      - name: Build APK (no gradlew)
+        run: gradle assembleDebug
 
       - name: Show built APKs
         run: find app/build/outputs/apk -name "*.apk"
